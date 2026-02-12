@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}Recherche - Hotel Reservation{% endblock %}
+
+{% block content %}
+<div class="search-page">
+    <div class="search-header">
+        <h1>Rechercher un hôtel</h1>
+        <p>Trouvez l'hôtel parfait pour votre séjour</p>
+    </div>
+    
+    <div class="search-form-container">
+        <form id="search-form" class="search-form">
+            {% csrf_token %}
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="city"><i class="fas fa-city"></i> Ville</label>
+                    <select id="city" name="city">
+                        <option value="">Choisir une ville</option>
+                        {% for city in cities %}
+                            <option value="{{ city }}">{{ city }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="check_in"><i class="fas fa-calendar-alt"></i> Arrivée</label>
+                    <input type="date" id="check_in" name="check_in" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="check_out"><i class="fas fa-calendar-alt"></i> Départ</label>
+                    <input type="date" id="check_out" name="check_out" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="number_of_rooms"><i class="fas fa-bed"></i> Chambres</label>
+                    <select id="number_of_rooms" name="number_of_rooms">
+                        <option value="1">1 chambre</option>
+                        <option value="2">2 chambres</option>
+                        <option value="3">3 chambres</option>
+                        <option value="4">4+ chambres</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="number_of_guests"><i class="fas fa-users"></i> Personnes</label>
+                    <select id="number_of_guests" name="number_of_guests">
+                        <option value="1">1 personne</option>
+                        <option value="2">2 personnes</option>
+                        <option value="3">3 personnes</option>
+                        <option value="4">4 personnes</option>
+                        <option value="5">5+ personnes</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="stars"><i class="fas fa-star"></i> Étoiles</label>
+                    <select id="stars" name="stars">
+                        <option value="">Toutes</option>
+                        <option value="5">5 étoiles</option>
+                        <option value="4">4 étoiles</option>
+                        <option value="3">3 étoiles</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="price-range">
+                <label>Prix par nuit</label>
+                <div class="range-inputs">
+                    <input type="number" name="min_price" placeholder="Min" min="0">
+                    <span>à</span>
+                    <input type="number" name="max_price" placeholder="Max" min="0">
+                </div>
+            </div>
+            
+            <div class="search-button">
+                <button type="button" id="search-btn" class="btn btn-primary btn-large">
+                    <i class="fas fa-search"></i> Rechercher
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Résultats -->
+    <div id="search-results" class="search-results">
+        <div class="results-placeholder">
+            <i class="fas fa-search fa-3x"></i>
+            <p>Vos résultats apparaîtront ici</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Configuration des dates par défaut
+const today = new Date().toISOString().split('T')[0];
+const nextWeek = new Date();
+nextWeek.setDate(nextWeek.getDate() + 7);
+const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
+// Définir les dates par défaut
+document.getElementById('check_in').value = today;
+document.getElementById('check_in').min = today;
+document.getElementById('check_out').value = nextWeekStr;
+document.getElementById('check_out').min = today;
+
+// Fonction de recherche
+document.getElementById('search-btn').addEventListener('click', async function() {
+    const formData = {
+        city: document.getElementById('city').value,
+        check_in: document.getElementById('check_in').value,
+        check_out: document.getElementById('check_out').value,
+        number_of_rooms: document.getElementById('number_of_rooms').value,
+        number_of_guests: document.getElementById('number_of_guests').value,
+        stars: document.getElementById('stars').value,
+        min_price: document.querySelector('input[name="min_price"]').value,
+        max_price: document.querySelector('input[name="max_price"]').value
+    };
+    
+    // Validation des dates
+    if (!formData.check_in || !formData.check_out) {
+        alert('Veuillez sélectionner les dates de séjour');
+        return;
+    }
+    
+    if (formData.check_in >= formData.check_out) {
+        alert('La date de départ doit être après la date d\'arrivée');
+        return;
+    }
+    
+    // Afficher un indicateur de chargement
+    document.getElementById('search-results').innerHTML = `
+        <div class="loading">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p>Recherche en cours...</p>
+        </div>
+    `;
+    
+    try {
+        // Utiliser l'API existante de recherche
+        const response = await fetch('/api/hotels/search/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erreur réseau');
+        }
+        
+        const hotels = await response.json();
+        
+        if (hotels.length > 0) {
+            let html = '<div class="results-grid">';
+            hotels.forEach(hotel => {
+                html += `
+                <div class="result-card">
+                    <h3>${hotel.name || hotel.hotel_name || 'Hôtel'}</h3>
+                    <p class="location"><i class="fas fa-map-marker-alt"></i> ${hotel.city || ''}</p>
+                    <p>${hotel.description || ''}</p>
+                    <div class="result-footer">
+                        <span class="price">${hotel.price_per_night || hotel.price || '0'}€ /nuit</span>
+                        <a href="/hotels/${hotel.id || hotel.hotel_id || '1'}/" class="btn btn-outline">Voir</a>
+                    </div>
+                </div>
+                `;
+            });
+            html += '</div>';
+            document.getElementById('search-results').innerHTML = html;
+        } else {
+            document.getElementById('search-results').innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-search fa-3x"></i>
+                    <h3>Aucun hôtel trouvé</h3>
+                    <p>Essayez de modifier vos critères de recherche</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        document.getElementById('search-results').innerHTML = `
+            <div class="error">
+                <i class="fas fa-exclamation-triangle fa-3x"></i>
+                <h3>Erreur de recherche</h3>
+                <p>Une erreur est survenue. Veuillez réessayer.</p>
+                <p><small>${error.message}</small></p>
+            </div>
+        `;
+    }
+});
+
+// Rechercher automatiquement avec les dates par défaut
+document.getElementById('search-btn').click();
+</script>
+{% endblock %}

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mandry{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="{% url 'home' %}" class="logo">
+                    <i class="fas fa-hotel"></i>
+                    <span>Mandry</span>
+                </a>
+                
+                <div class="nav-menu">
+                    <a href="{% url 'home' %}">Accueil</a>
+                    <a href="{% url 'hotel_list' %}">Hôtels</a>
+                    <a href="{% url 'search_hotels' %}">Rechercher</a>
+                    
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'my_bookings' %}">Mes réservations</a>
+                        <div class="user-menu">
+                            <span class="username">{{ user.username }}</span>
+                            <div class="dropdown">
+                                <a href="/profile/"><i class="fas fa-user"></i> Profil</a>
+                                <a href="/logout/"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="/login/" class="btn btn-outline">Connexion</a>
+                        <a href="/register/" class="btn btn-primary">Inscription</a>
+                    {% endif %}
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="container">
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                {{ message }}
+                <button class="close-btn">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-hotel"></i> Mandry</h3>
+                    <p>Votre plateforme de réservation fiable et sécurisée</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Navigation</h4>
+                    <a href="{% url 'home' %}">Accueil</a>
+                    <a href="{% url 'hotel_list' %}">Hôtels</a>
+                    <a href="{% url 'search_hotels' %}">Recherche</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-envelope"></i> contact@hotelreservation.com</p>
+                    <p><i class="fas fa-phone"></i> +261 38 73 756 83</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 HotelReservation. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Fermer les messages
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.parentElement.style.display = 'none';
+            });
+        });
+
+        // Dropdown utilisateur
+        const userMenu = document.querySelector('.user-menu');
+        if (userMenu) {
+            userMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+                this.querySelector('.dropdown').classList.toggle('show');
+            });
+        }
+
+        // Fermer dropdown en cliquant ailleurs
+        window.addEventListener('click', function() {
+            document.querySelectorAll('.dropdown').forEach(dropdown => {
+                dropdown.classList.remove('show');
+            });
+        });
+    </script>
+</body>
+</html>

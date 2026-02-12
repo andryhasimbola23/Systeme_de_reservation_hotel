@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Hôtels - Hotel Reservation{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Nos hôtels</h1>
+    <p>Découvrez notre sélection d'hôtels de qualité</p>
+</div>
+
+<div class="hotels-page">
+    <!-- Filtres -->
+    <aside class="filters">
+        <h3><i class="fas fa-filter"></i> Filtres</h3>
+        
+        <form method="GET" class="filter-form">
+            <div class="form-group">
+                <label for="city">Ville</label>
+                <select id="city" name="city">
+                    <option value="">Toutes les villes</option>
+                    {% for city in cities %}
+                        <option value="{{ city }}" {% if city == selected_city %}selected{% endif %}>
+                            {{ city }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="stars">Étoiles</label>
+                <select id="stars" name="stars">
+                    <option value="">Toutes</option>
+                    <option value="5" {% if selected_stars == "5" %}selected{% endif %}>★★★★★</option>
+                    <option value="4" {% if selected_stars == "4" %}selected{% endif %}>★★★★☆</option>
+                    <option value="3" {% if selected_stars == "3" %}selected{% endif %}>★★★☆☆</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="sort">Trier par</label>
+                <select id="sort" name="sort">
+                    <option value="name" {% if sort_by == "name" %}selected{% endif %}>Nom (A-Z)</option>
+                    <option value="stars" {% if sort_by == "stars" %}selected{% endif %}>Étoiles (↓)</option>
+                </select>
+            </div>
+            
+            <div class="filter-buttons">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Appliquer
+                </button>
+                <a href="{% url 'hotel_list' %}" class="btn btn-outline">Réinitialiser</a>
+            </div>
+        </form>
+    </aside>
+    
+    <!-- Liste des hôtels -->
+    <main class="hotels-list">
+        {% if hotels %}
+            {% for hotel in hotels %}
+            <div class="hotel-card">
+                <div class="hotel-main">
+                    <div class="hotel-header">
+                        <h3>{{ hotel.name }}</h3>
+                        <span class="rating">{{ hotel.stars }}★</span>
+                    </div>
+                    
+                    <p class="location">
+                        <i class="fas fa-map-marker-alt"></i> {{ hotel.city }}, {{ hotel.country }}
+                    </p>
+                    
+                    <p class="description">{{ hotel.description }}</p>
+                    
+                    <div class="features">
+                        {% if hotel.has_wifi %}<span><i class="fas fa-wifi"></i> WiFi</span>{% endif %}
+                        {% if hotel.has_parking %}<span><i class="fas fa-parking"></i> Parking</span>{% endif %}
+                        {% if hotel.has_pool %}<span><i class="fas fa-swimming-pool"></i> Piscine</span>{% endif %}
+                        {% if hotel.has_restaurant %}<span><i class="fas fa-utensils"></i> Restaurant</span>{% endif %}
+                    </div>
+                </div>
+                
+                <div class="hotel-actions">
+                    {% with hotel.room_types.first as room %}
+                    {% if room %}
+                    <div class="price">
+                        <span class="from">À partir de</span>
+                        <span class="amount">{{ room.price_per_night }}€</span>
+                        <span class="period">/nuit</span>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                    
+                    <a href="{% url 'hotel_detail' hotel.id %}" class="btn btn-primary">
+                        Voir détails
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-search fa-3x"></i>
+                <h3>Aucun hôtel trouvé</h3>
+                <p>Modifiez vos critères de recherche</p>
+            </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

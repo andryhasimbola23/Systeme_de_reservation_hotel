@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}Réserver - Hotel Reservation{% endblock %}
+
+{% block content %}
+<div class="booking-create-page">
+    <div class="page-header">
+        <h1>Réserver une chambre</h1>
+        <p>Confirmez votre réservation pour {{ room.hotel.name }}</p>
+    </div>
+    
+    <div class="booking-container">
+        <!-- Récapitulatif de la chambre -->
+        <div class="room-summary">
+            <h2>{{ room.name }}</h2>
+            <p class="hotel-name">{{ room.hotel.name }} - {{ room.hotel.city }}</p>
+            
+            <div class="room-details">
+                <div class="detail">
+                    <i class="fas fa-users"></i>
+                    <span>Capacité: {{ room.capacity }} personne(s)</span>
+                </div>
+                <div class="detail">
+                    <i class="fas fa-arrows-alt"></i>
+                    <span>Surface: {{ room.size }} m²</span>
+                </div>
+                <div class="detail">
+                    <i class="fas fa-bed"></i>
+                    <span>Type: {{ room.get_room_type_display }}</span>
+                </div>
+                <div class="detail">
+                    <i class="fas fa-tag"></i>
+                    <span>Prix: {{ room.price_per_night }}€ / nuit</span>
+                </div>
+            </div>
+            
+            <div class="room-features">
+                <h3>Équipements</h3>
+                <div class="features">
+                    {% if room.has_tv %}<span><i class="fas fa-tv"></i> TV</span>{% endif %}
+                    {% if room.has_ac %}<span><i class="fas fa-snowflake"></i> Climatisation</span>{% endif %}
+                    {% if room.has_minibar %}<span><i class="fas fa-glass-martini"></i> Minibar</span>{% endif %}
+                    {% if room.has_safe %}<span><i class="fas fa-lock"></i> Coffre-fort</span>{% endif %}
+                    {% if room.has_balcony %}<span><i class="fas fa-door-open"></i> Balcon</span>{% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Formulaire de réservation -->
+        <div class="booking-form-container">
+            <form method="POST" class="booking-form">
+                {% csrf_token %}
+                
+                <div class="form-section">
+                    <h3><i class="fas fa-calendar-alt"></i> Dates de séjour</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="check_in">Date d'arrivée</label>
+                            <input type="date" id="check_in" name="check_in" required 
+                                   min="{{ today|date:'Y-m-d' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="check_out">Date de départ</label>
+                            <input type="date" id="check_out" name="check_out" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3><i class="fas fa-info-circle"></i> Détails de la réservation</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="rooms">Nombre de chambres</label>
+                            <select id="rooms" name="rooms" required>
+                                {% for i in room_range %}
+                                <option value="{{ i }}" {% if i == 1 %}selected{% endif %}>
+                                    {{ i }} chambre(s)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="guests">Nombre de personnes</label>
+                            <select id="guests" name="guests" required>
+                                {% for i in guest_range %}
+                                <option value="{{ i }}" {% if i == room.capacity %}selected{% endif %}>
+                                    {{ i }} personne(s)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3><i class="fas fa-comment"></i> Demandes spéciales</h3>
+                    <div class="form-group">
+                        <textarea id="special_requests" name="special_requests" 
+                                  rows="4" placeholder="Vos demandes spéciales (optionnel)"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Calcul du prix -->
+                <div class="price-calculation">
+                    <h3><i class="fas fa-calculator"></i> Calcul du prix</h3>
+                    <div class="price-breakdown">
+                        <div class="price-row">
+                            <span>Prix par nuit</span>
+                            <span id="price_per_night">{{ room.price_per_night }}€</span>
+                        </div>
+                        <div class="price-row">
+                            <span>Nombre de nuits</span>
+                            <span id="nights_count">0</span>
+                        </div>
+                        <div class="price-row">
+                            <span>Nombre de chambres</span>
+                            <span id="rooms_count">1</span>
+                        </div>
+                        <div class="price-row total">
+                            <strong>Total estimé</strong>
+                            <strong id="total_price">0€</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-large">
+                        <i class="fas fa-check-circle"></i> Confirmer la réservation
+                    </button>
+                    <a href="{% url 'hotel_detail' room.hotel.id %}" class="btn btn-outline">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Politique d'annulation -->
+    <div class="cancellation-policy">
+        <h3><i class="fas fa-info-circle"></i> Politique d'annulation</h3>
+        <div class="policy-details">
+            {% if policies %}
+            <ul>
+                {% for policy in policies %}
+                <li>{{ policy.description }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>Pas de politique d'annulation spécifique.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Variables initiales
+const pricePerNight = {{ room.price_per_night }};
+const roomCapacity = {{ room.capacity }};
+const maxRooms = {{ room.quantity_available }};
+const today = new Date().toISOString().split('T')[0];
+
+// Configuration des dates
+document.getElementById('check_in').min = today;
+document.getElementById('check_in').value = today;
+
+// Mettre à jour la date de départ (7 jours après)
+const nextWeek = new Date();
+nextWeek.setDate(nextWeek.getDate() + 7);
+document.getElementById('check_out').value = nextWeek.toISOString().split('T')[0];
+document.getElementById('check_out').min = today;
+
+// Limiter le nombre de chambres disponibles
+const roomsSelect = document.getElementById('rooms');
+for (let i = 1; i <= maxRooms; i++) {
+    roomsSelect.innerHTML += `<option value="${i}">${i} chambre(s)</option>`;
+}
+
+// Calculer et mettre à jour le prix
+function calculatePrice() {
+    const checkIn = new Date(document.getElementById('check_in').value);
+    const checkOut = new Date(document.getElementById('check_out').value);
+    const rooms = parseInt(document.getElementById('rooms').value);
+    const guests = parseInt(document.getElementById('guests').value);
+    
+    // Valider les dates
+    if (checkIn >= checkOut) {
+        document.getElementById('nights_count').textContent = '0';
+        document.getElementById('total_price').textContent = '0€';
+        return;
+    }
+    
+    // Calculer le nombre de nuits
+    const timeDiff = checkOut.getTime() - checkIn.getTime();
+    const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    
+    // Calculer le total
+    const total = pricePerNight * nights * rooms;
+    
+    // Mettre à jour l'affichage
+    document.getElementById('nights_count').textContent = nights;
+    document.getElementById('rooms_count').textContent = rooms;
+    document.getElementById('total_price').textContent = total.toFixed(2) + '€';
+    
+    // Valider le nombre de personnes
+    const maxGuests = roomCapacity * rooms;
+    const guestsSelect = document.getElementById('guests');
+    
+    // Mettre à jour les options de personnes
+    guestsSelect.innerHTML = '';
+    for (let i = 1; i <= maxGuests; i++) {
+        guestsSelect.innerHTML += `<option value="${i}" ${i === guests ? 'selected' : ''}>${i} personne(s)</option>`;
+    }
+}
+
+// Écouter les changements
+document.getElementById('check_in').addEventListener('change', calculatePrice);
+document.getElementById('check_out').addEventListener('change', calculatePrice);
+document.getElementById('rooms').addEventListener('change', calculatePrice);
+document.getElementById('guests').addEventListener('change', calculatePrice);
+
+// Calcul initial
+calculatePrice();
+
+// Validation du formulaire
+document.querySelector('.booking-form').addEventListener('submit', function(e) {
+    const checkIn = new Date(document.getElementById('check_in').value);
+    const checkOut = new Date(document.getElementById('check_out').value);
+    const rooms = parseInt(document.getElementById('rooms').value);
+    const guests = parseInt(document.getElementById('guests').value);
+    
+    if (checkIn >= checkOut) {
+        e.preventDefault();
+        alert('La date de départ doit être après la date d\'arrivée');
+        return false;
+    }
+    
+    if (rooms > maxRooms) {
+        e.preventDefault();
+        alert(`Désolé, seulement ${maxRooms} chambre(s) disponible(s)`);
+        return false;
+    }
+    
+    const maxGuests = roomCapacity * rooms;
+    if (guests > maxGuests) {
+        e.preventDefault();
+        alert(`Maximum ${maxGuests} personne(s) pour ${rooms} chambre(s)`);
+        return false;
+    }
+    
+    return true;
+});
+</script>
+{% endblock %}

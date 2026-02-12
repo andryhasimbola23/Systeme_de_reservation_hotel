@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Mes réservations - Hotel Reservation{% endblock %}
+
+{% block content %}
+<div class="bookings-page">
+    <div class="page-header">
+        <h1>Mes réservations</h1>
+        <p>Consultez et gérez vos réservations</p>
+    </div>
+    
+    {% if bookings %}
+    <!-- Graphique -->
+    {% if plot_div %}
+    <div class="section">
+        <h2>Historique des dépenses</h2>
+        <div class="chart-container">
+            {{ plot_div|safe }}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Liste des réservations -->
+    <div class="bookings-list">
+        {% for booking in bookings %}
+        <div class="booking-card {% if booking.status == 'cancelled' %}cancelled{% endif %}">
+            <div class="booking-header">
+                <h3>
+                    <a href="{% url 'booking_detail' booking.id %}" class="booking-link">
+                        Réservation #{{ booking.id }}
+                    </a>
+                </h3>
+                <span class="status status-{{ booking.status }}">
+                    {{ booking.get_status_display }}
+                </span>
+            </div>
+            
+            <div class="booking-details">
+                <div class="detail">
+                    <i class="fas fa-hotel"></i>
+                    <div>
+                        <strong>Hôtel</strong>
+                        <p>{{ booking.room_type.hotel.name }}</p>
+                    </div>
+                </div>
+                
+                <div class="detail">
+                    <i class="fas fa-bed"></i>
+                    <div>
+                        <strong>Chambre</strong>
+                        <p>{{ booking.room_type.name }}</p>
+                    </div>
+                </div>
+                
+                <div class="detail">
+                    <i class="fas fa-calendar-alt"></i>
+                    <div>
+                        <strong>Dates</strong>
+                        <p>{{ booking.check_in_date }} → {{ booking.check_out_date }}</p>
+                    </div>
+                </div>
+                
+                <div class="detail">
+                    <i class="fas fa-users"></i>
+                    <div>
+                        <strong>Personnes</strong>
+                        <p>{{ booking.number_of_guests }} personne(s)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="booking-footer">
+                <div class="price">
+                    <strong>Total</strong>
+                    <span class="amount">{{ booking.total_price }}€</span>
+                </div>
+                
+                <div class="actions">
+                    <a href="{% url 'booking_detail' booking.id %}" class="btn btn-outline">
+                        <i class="fas fa-eye"></i> Détails
+                    </a>
+                    
+                    {% if booking.can_cancel %}
+                    <form method="POST" action="{% url 'booking_detail' booking.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="cancelled">
+                        <button type="submit" class="btn btn-danger" 
+                                onclick="return confirm('Êtes-vous sûr de vouloir annuler cette réservation ?')">
+                            <i class="fas fa-times"></i> Annuler
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-calendar-times fa-3x"></i>
+        <h3>Aucune réservation</h3>
+        <p>Vous n'avez pas encore fait de réservation</p>
+        <a href="{% url 'hotel_list' %}" class="btn btn-primary">
+            <i class="fas fa-search"></i> Chercher un hôtel
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

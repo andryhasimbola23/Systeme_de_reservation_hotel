@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Page non trouvée - Hotel Reservation{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <div class="error-content">
+        <h1>404</h1>
+        <h2>Page non trouvée</h2>
+        <p>La page que vous recherchez n'existe pas ou a été déplacée.</p>
+        <a href="{% url 'home' %}" class="btn btn-primary">
+            <i class="fas fa-home"></i> Retour à l'accueil
+        </a>
+    </div>
+</div>
+
+<style>
+.error-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+}
+
+.error-content h1 {
+    font-size: 8rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.error-content h2 {
+    font-size: 2rem;
+    color: var(--dark);
+    margin-bottom: 1rem;
+}
+
+.error-content p {
+    font-size: 1.2rem;
+    color: var(--gray);
+    margin-bottom: 2rem;
+}
+</style>
+{% endblock %}

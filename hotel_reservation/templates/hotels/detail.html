@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ hotel.name }} - Hotel Reservation{% endblock %}
+
+{% block content %}
+<div class="hotel-detail">
+    <!-- Header -->
+    <div class="hotel-header">
+        <h1>{{ hotel.name }}</h1>
+        <div class="hotel-meta">
+            <span class="rating">{{ hotel.stars }}★</span>
+            <span class="location"><i class="fas fa-map-marker-alt"></i> {{ hotel.city }}, {{ hotel.country }}</span>
+        </div>
+    </div>
+    
+    <!-- Description -->
+    <div class="section">
+        <h2>Description</h2>
+        <p>{{ hotel.description }}</p>
+    </div>
+    
+    <!-- Équipements -->
+    <div class="section">
+        <h2>Équipements</h2>
+        <div class="features-grid">
+            {% if hotel.has_wifi %}
+            <div class="feature-item">
+                <i class="fas fa-wifi"></i>
+                <span>WiFi gratuit</span>
+            </div>
+            {% endif %}
+            {% if hotel.has_parking %}
+            <div class="feature-item">
+                <i class="fas fa-parking"></i>
+                <span>Parking</span>
+            </div>
+            {% endif %}
+            {% if hotel.has_pool %}
+            <div class="feature-item">
+                <i class="fas fa-swimming-pool"></i>
+                <span>Piscine</span>
+            </div>
+            {% endif %}
+            {% if hotel.has_spa %}
+            <div class="feature-item">
+                <i class="fas fa-spa"></i>
+                <span>Spa</span>
+            </div>
+            {% endif %}
+            {% if hotel.has_restaurant %}
+            <div class="feature-item">
+                <i class="fas fa-utensils"></i>
+                <span>Restaurant</span>
+            </div>
+            {% endif %}
+            {% if hotel.has_gym %}
+            <div class="feature-item">
+                <i class="fas fa-dumbbell"></i>
+                <span>Gym</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Graphique des prix -->
+    {% if price_plot %}
+    <div class="section">
+        <h2>Prix des chambres</h2>
+        <div class="chart-container">
+            {{ price_plot|safe }}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Chambres disponibles -->
+    <div class="section">
+        <h2>Chambres disponibles</h2>
+        
+        {% if rooms %}
+        <div class="rooms-list">
+            {% for room in rooms %}
+            <div class="room-card">
+                <div class="room-header">
+                    <h3>{{ room.name }}</h3>
+                    <span class="room-type">{{ room.get_room_type_display }}</span>
+                </div>
+                
+                <div class="room-details">
+                    <p><i class="fas fa-user"></i> {{ room.capacity }} personne(s)</p>
+                    <p><i class="fas fa-arrows-alt"></i> {{ room.size }} m²</p>
+                    <p><i class="fas fa-bed"></i> {{ room.quantity_available }} disponible(s)</p>
+                </div>
+                
+                <div class="room-features">
+                    {% if room.has_tv %}<span><i class="fas fa-tv"></i></span>{% endif %}
+                    {% if room.has_ac %}<span><i class="fas fa-snowflake"></i></span>{% endif %}
+                    {% if room.has_minibar %}<span><i class="fas fa-glass-martini"></i></span>{% endif %}
+                    {% if room.has_safe %}<span><i class="fas fa-lock"></i></span>{% endif %}
+                    {% if room.has_balcony %}<span><i class="fas fa-door-open"></i></span>{% endif %}
+                </div>
+                
+                <div class="room-footer">
+                    <div class="price">
+                        <span class="amount">{{ room.price_per_night }}€</span>
+                        <span class="period">/nuit</span>
+                    </div>
+                    
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'create_booking' room.id %}" class="btn btn-primary">
+                        <i class="fas fa-calendar-plus"></i> Réserver
+                    </a>
+                    {% else %}
+                    <a href="/login/" class="btn btn-outline">
+                        <i class="fas fa-sign-in-alt"></i> Connectez-vous pour réserver
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>Aucune chambre disponible pour le moment</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Informations de contact -->
+    <div class="section contact-info">
+        <h2>Informations de contact</h2>
+        <div class="contact-grid">
+            <div class="contact-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <div>
+                    <h4>Adresse</h4>
+                    <p>{{ hotel.address }}</p>
+                </div>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-phone"></i>
+                <div>
+                    <h4>Téléphone</h4>
+                    <p>{{ hotel.phone }}</p>
+                </div>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-envelope"></i>
+                <div>
+                    <h4>Email</h4>
+                    <p>{{ hotel.email }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

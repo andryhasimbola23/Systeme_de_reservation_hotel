@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Accueil - Hotel Reservation{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content">
+        <h1>Trouvez l'hôtel parfait pour votre séjour</h1>
+        <p>Des centaines d'hôtels de qualité avec les meilleurs prix garantis</p>
+        <a href="{% url 'search_hotels' %}" class="btn btn-primary btn-large">
+            <i class="fas fa-search"></i> Rechercher un hôtel
+        </a>
+    </div>
+</section>
+
+<!-- Stats -->
+<section class="stats">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <i class="fas fa-hotel"></i>
+            <h3>{{ stats.hotel_count }}+</h3>
+            <p>Hôtels</p>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-bed"></i>
+            <h3>{{ stats.room_count }}+</h3>
+            <p>Chambres</p>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-users"></i>
+            <h3>{{ stats.booking_count }}+</h3>
+            <p>Clients satisfaits</p>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-star"></i>
+            <h3>{{ stats.avg_rating|floatformat:1 }}</h3>
+            <p>Note moyenne</p>
+        </div>
+    </div>
+</section>
+
+<!-- Graphique -->
+<section class="section">
+    <h2 class="section-title">Répartition des hôtels</h2>
+    <div class="chart-container">
+        {{ plot_div|safe }}
+    </div>
+</section>
+
+<!-- Derniers hôtels -->
+<section class="section">
+    <div class="section-header">
+        <h2 class="section-title">Nouveaux hôtels</h2>
+        <a href="{% url 'hotel_list' %}" class="link">Voir tout <i class="fas fa-arrow-right"></i></a>
+    </div>
+    
+    <div class="hotel-cards">
+        {% for hotel in latest_hotels %}
+        <div class="card">
+            <div class="card-header">
+                <span class="badge">{{ hotel.stars }}★</span>
+                <h3>{{ hotel.name }}</h3>
+            </div>
+            <div class="card-body">
+                <p class="location"><i class="fas fa-map-marker-alt"></i> {{ hotel.city }}, {{ hotel.country }}</p>
+                <p class="description">{{ hotel.description|truncatechars:100 }}</p>
+                <div class="features">
+                    {% if hotel.has_wifi %}<span class="feature"><i class="fas fa-wifi"></i> WiFi</span>{% endif %}
+                    {% if hotel.has_parking %}<span class="feature"><i class="fas fa-parking"></i> Parking</span>{% endif %}
+                    {% if hotel.has_pool %}<span class="feature"><i class="fas fa-swimming-pool"></i> Piscine</span>{% endif %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'hotel_detail' hotel.id %}" class="btn btn-outline">Voir détails</a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-hotel fa-3x"></i>
+            <p>Aucun hôtel disponible pour le moment</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

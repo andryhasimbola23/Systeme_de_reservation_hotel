@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}Réservation #{{ booking.id }} - Hotel Reservation{% endblock %}
+
+{% block content %}
+<div class="booking-detail-page">
+    <div class="page-header">
+        <h1>Réservation #{{ booking.id }}</h1>
+        <div class="booking-status">
+            <span class="status-badge status-{{ booking.status }}">
+                {{ booking.get_status_display }}
+            </span>
+            <span class="booking-date">Créée le {{ booking.created_at|date:"d/m/Y" }}</span>
+        </div>
+    </div>
+    
+    <div class="booking-content">
+        <!-- Informations principales -->
+        <div class="booking-card">
+            <div class="booking-section">
+                <h2><i class="fas fa-hotel"></i> Informations de l'hôtel</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Hôtel</strong>
+                        <p>{{ booking.room_type.hotel.name }}</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Adresse</strong>
+                        <p>{{ booking.room_type.hotel.address }}</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Téléphone</strong>
+                        <p>{{ booking.room_type.hotel.phone }}</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Email</strong>
+                        <p>{{ booking.room_type.hotel.email }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="booking-section">
+                <h2><i class="fas fa-bed"></i> Détails de la chambre</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Type de chambre</strong>
+                        <p>{{ booking.room_type.name }}</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Capacité</strong>
+                        <p>{{ booking.room_type.capacity }} personne(s)</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Surface</strong>
+                        <p>{{ booking.room_type.size }} m²</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Prix par nuit</strong>
+                        <p>{{ booking.room_type.price_per_night }}€</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="booking-section">
+                <h2><i class="fas fa-calendar-alt"></i> Détails du séjour</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Dates</strong>
+                        <p>{{ booking.check_in_date|date:"d/m/Y" }} → {{ booking.check_out_date|date:"d/m/Y" }}</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Nombre de nuits</strong>
+                        <p>{{ booking.number_of_nights }}</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Nombre de chambres</strong>
+                        <p>{{ booking.number_of_rooms }}</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Nombre de personnes</strong>
+                        <p>{{ booking.number_of_guests }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            {% if booking.special_requests %}
+            <div class="booking-section">
+                <h2><i class="fas fa-comment"></i> Demandes spéciales</h2>
+                <div class="special-requests">
+                    <p>{{ booking.special_requests }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Prix et paiement -->
+        <div class="payment-card">
+            <h2><i class="fas fa-credit-card"></i> Détails du paiement</h2>
+            
+            <div class="price-breakdown">
+                <div class="price-row">
+                    <span>Prix par nuit</span>
+                    <span>{{ booking.room_type.price_per_night }}€</span>
+                </div>
+                <div class="price-row">
+                    <span>Nombre de nuits</span>
+                    <span>{{ booking.number_of_nights }}</span>
+                </div>
+                <div class="price-row">
+                    <span>Nombre de chambres</span>
+                    <span>{{ booking.number_of_rooms }}</span>
+                </div>
+                <div class="price-row total">
+                    <strong>Total</strong>
+                    <strong>{{ booking.total_price }}€</strong>
+                </div>
+            </div>
+            
+            {% if booking.payment %}
+            <div class="payment-details">
+                <h3>Informations de paiement</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Statut</strong>
+                        <span class="payment-status payment-{{ booking.payment.payment_status }}">
+                            {{ booking.payment.get_payment_status_display }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Méthode</strong>
+                        <p>{{ booking.payment.get_payment_method_display }}</p>
+                    </div>
+                    {% if booking.payment.transaction_id %}
+                    <div class="info-item">
+                        <strong>Transaction ID</strong>
+                        <p>{{ booking.payment.transaction_id }}</p>
+                    </div>
+                    {% endif %}
+                    {% if booking.payment.payment_date %}
+                    <div class="info-item">
+                        <strong>Date de paiement</strong>
+                        <p>{{ booking.payment.payment_date|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Actions -->
+            <div class="booking-actions">
+                {% if booking.status == 'pending' %}
+                <a href="{% url 'process_payment' booking.id %}" class="btn btn-primary">
+                    <i class="fas fa-credit-card"></i> Procéder au paiement
+                </a>
+                {% endif %}
+                
+                {% if booking.can_cancel %}
+                <form method="POST" action="{% url 'booking_detail' booking.id %}" class="cancel-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="cancelled">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette réservation ?')">
+                        <i class="fas fa-times"></i> Annuler la réservation
+                    </button>
+                </form>
+                {% endif %}
+                
+                <a href="{% url 'my_bookings' %}" class="btn btn-outline">
+                    <i class="fas fa-arrow-left"></i> Retour aux réservations
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Politique d'annulation -->
+    {% if cancellation_policies %}
+    <div class="cancellation-info">
+        <h3><i class="fas fa-info-circle"></i> Politique d'annulation</h3>
+        <div class="policies-list">
+            {% for policy in cancellation_policies %}
+            <div class="policy-item">
+                <div class="policy-header">
+                    <span class="days">{{ policy.days_before_checkin }} jours avant</span>
+                    <span class="penalty">{{ policy.penalty_percentage }}% de pénalité</span>
+                </div>
+                <p class="policy-description">{{ policy.description }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.cancel-form {
+    display: inline-block;
+}
+</style>
+{% endblock %}
